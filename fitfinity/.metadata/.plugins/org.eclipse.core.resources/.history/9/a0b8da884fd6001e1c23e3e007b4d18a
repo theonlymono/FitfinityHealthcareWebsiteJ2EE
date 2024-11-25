@@ -1,0 +1,244 @@
+package Booking;
+
+import java.io.*;
+import java.sql.*;
+import java.util.Calendar;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.*;
+
+@WebServlet("/BookAppointmentServlet")
+public class BookAppointmentServlet extends HttpServlet {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // Retrieve parameters from the AJAX request
+        String doctorID = request.getParameter("doctorID");
+        String patientIDStr = request.getParameter("patientID");
+        int patientID = Integer.parseInt(patientIDStr);
+        String shift = request.getParameter("shift");
+        String day = request.getParameter("day");
+
+        // Get today's day of the week
+        Calendar calendar = Calendar.getInstance();
+        int todayDayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
+
+        // Check if today's day matches the day retrieved from the database
+        if (!dayMatchesToday(todayDayOfWeek, day)) {
+            response.getWriter().write("Cannot book doctor's schedule for a different day. Only accept appointment within one day. Sorry for inconvenience");
+            return;
+        }
+
+        // Check if patient has already booked an appointment for the same shift and day
+        if (patientAlreadyBooked(patientID, doctorID, day, shift)) {
+            response.getWriter().write("You have already booked an appointment for the same shift and day with this doctor.");
+            return;
+        }
+
+        // Check if patient has already booked an appointment for the same shift and day with another doctor
+        if (patientAlreadyBookedWithAnotherDoctor(patientID, day, shift)) {
+            response.getWriter().write("You have already booked an appointment for the same shift and day with another doctor. Please cancel the existing appointment before booking with this doctor.");
+            return;
+        }
+
+        // Check if the booking time exceeds the specified limit for the shift
+        if (!isBookingTimeValid(shift)) {
+            response.getWriter().write("Booking is not allowed at this time for the selected shift.");
+            return;
+        }
+
+        // Insert appointment into the database
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        try {
+            // Load the MySQL JDBC driver
+            Class.forName("com.mysql.jdbc.Driver");
+
+            // Connect to the database
+            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/fitfinity", "root", "");
+
+            // Generate a unique appointmentID
+            int appointmentID = generateAppointmentID(conn);
+
+            // Check if appointmentToken is greater than 5
+            int appointmentToken = generateAppointmentToken(conn, doctorID, shift, day);
+            if (appointmentToken > 5) {
+                response.getWriter().write("Failed to book appointment. Appointment slots for this shift are fully booked. Sorry for inconvenience");
+                return;
+            }
+
+            // Prepare SQL statement for insertion
+            String sql = "INSERT INTO appointments (appointmentID, patientID, doctorID, appointmentToken, shift, day, appointmentData) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, appointmentID);
+            pstmt.setInt(2, patientID); // Assuming patientID for the logged-in user is 1, replace with actual patientID
+            pstmt.setString(3, doctorID);
+            pstmt.setInt(4, appointmentToken);
+            pstmt.setString(5, shift);
+            pstmt.setString(6, day);
+            pstmt.setDate(7, getCurrentDate());
+
+            // Execute the SQL statement
+            int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected > 0) {
+                response.getWriter().write("Appointment booked successfully! Thank for your appointment.");
+            } else {
+                response.getWriter().write("Failed to book appointment.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.getWriter().write("An error occurred while booking the appointment.");
+        } finally {
+            // Close resources
+            try {
+                if (pstmt != null) pstmt.close();
+                if (conn != null) conn.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    // Method to generate a unique appointmentID
+    private int generateAppointmentID(Connection conn) throws SQLException {
+        int appointmentID = 0;
+        String sql = "SELECT MAX(appointmentID) FROM appointments";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql); ResultSet rs = pstmt.executeQuery()) {
+            if (rs.next()) {
+                appointmentID = rs.getInt(1) + 1;
+            } else {
+                appointmentID = 1;
+            }
+        }
+        return appointmentID;
+    }
+
+    // Method to generate a unique appointment token
+    private int generateAppointmentToken(Connection conn, String doctorID, String shift, String day) throws SQLException {
+        // Query to get the count of appointments for the given doctor and shift
+        String countAppointmentsSql = "SELECT COUNT(*) FROM appointments WHERE doctorID = ? AND shift = ? AND day = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(countAppointmentsSql)) {
+            pstmt.setString(1, doctorID);
+            pstmt.setString(2, shift);
+            pstmt.setString(3, day);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    // Get the count of appointments
+                    int numAppointments = rs.getInt(1);
+                    // Generate the appointment token based on the count of appointments
+                    return numAppointments + 1;
+                }
+            }
+        }
+        // Default return 1 if unable to generate token
+        return 1;
+    }
+
+    // Method to get the current date
+    private Date getCurrentDate() {
+        // Implement your logic to get the current date (e.g., using java.util.Date)
+        return new Date(System.currentTimeMillis()); // Sample implementation, replace with actual logic
+    }
+
+    // Method to check if today's day matches the given day
+    private boolean dayMatchesToday(int todayDayOfWeek, String day) {
+        // Convert today's day to a string representation (e.g., Sunday = "Sunday", Monday = "Monday", etc.)
+        String[] daysOfWeek = {"", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
+        String today = daysOfWeek[todayDayOfWeek];
+
+        // Compare today's day with the given day
+        return today.equalsIgnoreCase(day);
+    }
+
+    // Method to check if a patient has already booked an appointment for the same shift and day with this doctor
+    private boolean patientAlreadyBooked(int patientID, String doctorID, String day, String shift) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            // Connect to the database
+            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/fitfinity", "root", "");
+
+            // Prepare SQL statement to check if the patient has already booked an appointment for the same shift and day with this doctor
+            String sql = "SELECT COUNT(*) FROM appointments WHERE patientID = ? AND doctorID = ? AND day = ? AND shift = ?";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, patientID);
+            pstmt.setString(2, doctorID);
+            pstmt.setString(3, day);
+            pstmt.setString(4, shift);
+
+            // Execute the SQL statement
+            rs = pstmt.executeQuery();
+            if (rs.next()) {
+                int count = rs.getInt(1);
+                return count > 0;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            // Close resources
+            try {
+                if (rs != null) rs.close();
+                if (pstmt != null) pstmt.close();
+                if (conn != null) conn.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return false;
+    }
+
+    // Method to check if a patient has already booked an appointment for the same shift and day with another doctor
+    private boolean patientAlreadyBookedWithAnotherDoctor(int patientID, String day, String shift) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            // Connect to the database
+            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/fitfinity", "root", "");
+
+            // Prepare SQL statement to check if the patient has already booked an appointment for the same shift and day with another doctor
+            String sql = "SELECT COUNT(*) FROM appointments WHERE patientID = ? AND day = ? AND shift = ?";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, patientID);
+            pstmt.setString(2, day);
+            pstmt.setString(3, shift);
+
+            // Execute the SQL statement
+            rs = pstmt.executeQuery();
+            if (rs.next()) {
+                int count = rs.getInt(1);
+                return count > 0;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            // Close resources
+            try {
+                if (rs != null) rs.close();
+                if (pstmt != null) pstmt.close();
+                if (conn != null) conn.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return false;
+    }
+
+    // Method to check if the booking time exceeds the specified limit for the shift
+    private boolean isBookingTimeValid(String shift) {
+        Calendar calendar = Calendar.getInstance();
+        int hourOfDay = calendar.get(Calendar.HOUR_OF_DAY); // Get the current hour of the day (24-hour format)
+        switch (shift) {
+            case "10:00AM - 12:00PM":
+                // Shift 1: Valid from 10:00 AM
+                return hourOfDay <= 22;
+            case "2:00PM - 4:00PM":
+                // Shift 2: Valid from 2:00 PM
+                return hourOfDay <= 14;
+            case "6:00PM - 8:00PM":
+                // Shift 3: Valid from 6:00 PM
+                return hourOfDay <= 18;
+            default:
+                return false;
+        }
+    }
+}

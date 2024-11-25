@@ -1,0 +1,133 @@
+package AddDoctorSchedule;
+
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+@WebServlet("/AddDoctorSchedule")
+public class AddDoctorSchedule extends HttpServlet {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String doctorID = request.getParameter("doctorID");
+        String[] shifts = request.getParameterValues("shift");
+        
+        // Check if shifts are empty
+        if (shifts == null || shifts.length == 0) {
+            // Redirect back to the JSP page with error parameter
+            response.sendRedirect("DrSchedule.jsp?error=Shift is empty");
+            return;
+        }
+        
+        // JDBC URL, username, and password for your MySQL connection
+        String jdbcURL = "jdbc:mysql://localhost:3306/fitfinity";
+        String username = "root";
+        String password = "";
+        
+        Connection connection = null;
+        PreparedStatement statement = null;
+        
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            connection = DriverManager.getConnection(jdbcURL, username, password);
+            
+            // Check if doctorID exists in the database
+            boolean doctorExists = false;
+            String checkDoctorIDSql = "SELECT doctorID FROM doctors WHERE doctorID = ?";
+            PreparedStatement checkDoctorIDStmt = connection.prepareStatement(checkDoctorIDSql);
+            checkDoctorIDStmt.setString(1, doctorID);
+            ResultSet resultSet = checkDoctorIDStmt.executeQuery();
+            if (resultSet.next()) {
+                doctorExists = true;
+            }
+            resultSet.close();
+            checkDoctorIDStmt.close();
+            
+            if (!doctorExists) {
+                // Redirect back to the JSP page with error parameter
+                response.sendRedirect("DrSchedule.jsp?error=Please insert the existing Doctor ID");
+                return;
+            }
+            
+            // Check if the selected schedule already exists for the doctor
+            for (String shift : shifts) {
+                String[] shiftParts = shift.split(",");
+                String day = shiftParts[0];
+                String time = shiftParts[1].trim();
+                
+                String checkScheduleSql = "SELECT * FROM doctorschedules WHERE doctorID = ? AND day = ? AND shift = ?";
+                PreparedStatement checkScheduleStmt = connection.prepareStatement(checkScheduleSql);
+                checkScheduleStmt.setString(1, doctorID);
+                checkScheduleStmt.setString(2, day);
+                checkScheduleStmt.setString(3, time);
+                ResultSet scheduleResultSet = checkScheduleStmt.executeQuery();
+                if (scheduleResultSet.next()) {
+                    // Redirect back to the JSP page with error parameter
+                    response.sendRedirect("DrSchedule.jsp?error=Doctor already has schedule on " + day + " at " + time);
+                    return;
+                }
+                scheduleResultSet.close();
+                checkScheduleStmt.close();
+            }
+            
+            // SQL statement to insert data into the doctorschedules table
+            String sql = "INSERT INTO doctorschedules (doctorID, day, shift) VALUES (?, ?, ?)";
+            statement = connection.prepareStatement(sql);
+            
+            // Generate unique ID for each record
+            
+            
+//            // Retrieve the maximum ID from the database to determine the next available ID
+//            String getMaxIdSql = "SELECT TOP 1 id FROM doctorschedules ORDER BY ID DESC";
+//            PreparedStatement getMaxIdStmt = connection.prepareStatement(getMaxIdSql);
+//            getMaxIdStmt.executeQuery();
+//            getMaxIdStmt.getResultSet().next();
+//            int maxId = getMaxIdStmt.getResultSet().getInt(1);
+//            int id = maxId + 1; // increment ID
+//            
+//            // Insert each selected shift into the database
+//            for (String shift : shifts) {
+//                String[] shiftParts = shift.split(",");
+//                String day = shiftParts[0];
+//                String time = shiftParts[1].trim();
+//                statement.setString(1, doctorID);
+//                statement.setString(2, day);
+//                statement.setString(3, time);
+//                statement.executeUpdate();
+//            }
+            
+            String sqlInsert = "INSERT INTO `doctorschedules`(`doctorID`, `day`, `shift`) VALUES ('[value-1]','[value-2]','[value-3]','[value-4]')";
+            
+            // Close resources
+            statement.close();
+            connection.close();
+            
+            // Redirect back to the JSP page with success parameter
+            response.sendRedirect("DrSchedule.jsp?success=true");
+        } catch (ClassNotFoundException | SQLException e) {
+            e.printStackTrace();
+            
+            // Redirect back to the JSP page with error parameter
+            response.sendRedirect("DrSchedule.jsp?success=false");
+        } finally {
+            // Close resources in finally block to ensure they are closed even if an exception occurs
+            try {
+                if (statement != null) {
+                    statement.close();
+                }
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}

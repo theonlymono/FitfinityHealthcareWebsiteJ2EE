@@ -1,0 +1,100 @@
+package Booking;
+
+import java.io.*;
+import java.sql.*;
+import java.util.Calendar;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.*;
+
+@WebServlet("/BookAppointmentServlet")
+public class BookAppointmentServlet extends HttpServlet {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // Retrieve parameters from the AJAX request
+        String doctorID = request.getParameter("doctorID");
+        String patientIDStr = request.getParameter("patientID");
+        int patientID = Integer.parseInt(patientIDStr);
+        String shift = request.getParameter("shift");
+        String day = request.getParameter("day");
+
+        // Get current time and hour
+        Calendar calendar = Calendar.getInstance();
+        int currentHour = calendar.get(Calendar.HOUR_OF_DAY);
+
+        // Check if booking is after the starting hour of the shift
+        if (isAfterStartHour(shift, currentHour)) {
+            response.getWriter().write("Appointment booking is not allowed after the shift starts. Please book before the starting hour. Sorry for inconvenience");
+            return;
+        }
+
+        // Check if patient already has an appointment for the same doctor, shift, and day
+        if (hasExistingAppointment(conn, patientID, doctorID, shift, day)) {
+            response.getWriter().write("You already have an appointment for this doctor, shift, and day. You cannot book multiple appointments for the same slot.");
+            return;
+        }
+
+        // Check if patient already has an appointment for the same shift and day (different doctor)
+        if (hasConflictingAppointment(conn, patientID, shift, day)) {
+            response.getWriter().write("You already have an appointment for a different doctor on the same day and shift. You cannot book multiple appointments for the same time slot.");
+            return;
+        }
+
+        // Connection and resource management
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        try {
+            // Load the MySQL JDBC driver
+            Class.forName("com.mysql.jdbc.Driver");
+
+            // Connect to the database
+            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/fitfinity", "root", "");
+
+            // Generate a unique appointmentID
+            int appointmentID = generateAppointmentID(conn);
+
+            // Check if appointmentToken is greater than 5
+            int appointmentToken = generateAppointmentToken(conn, doctorID, shift, day);
+            if (appointmentToken > 5) {
+                response.getWriter().write("Failed to book appointment. Appointment slots for this shift are fully booked. Sorry for inconvenience");
+                return;
+            }
+
+            // Prepare SQL statement for insertion
+            String sql = "INSERT INTO appointments (appointmentID, patientID, doctorID, appointmentToken, shift, day, appointmentData) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, appointmentID);
+            pstmt.setInt(2, patientID); // Assuming patientID for the logged-in user is 1, replace with actual patientID
+            pstmt.setString(3, doctorID);
+            pstmt.setInt(4, appointmentToken);
+            pstmt.setString(5, shift);
+            pstmt.setString(6, day);
+            pstmt.setDate(7, getCurrentDate());
+
+            // Execute the SQL statement
+            int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected > 0) {
+                response.getWriter().write("Appointment booked successfully! Thank for your appointment.");
+            } else {
+                response.getWriter().write("Failed to book appointment.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.getWriter().write("An error occurred while booking the appointment.");
+        } finally {
+            // Close resources
+            try {
+                if (pstmt != null) pstmt.close();
+                if (conn != null) conn.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    // Method to generate a unique appointmentID
+    private int generateAppointmentID(Connection conn) throws SQLException {
+        int appointmentID = 0;
+        String sql = "SELECT MAX(appointmentID) FROM appointments";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql); ResultSet rs = pstmt.executeQuery()) {
+            if (rs.next()) {
+                appointmentID = rs.getInt(1) + 1;

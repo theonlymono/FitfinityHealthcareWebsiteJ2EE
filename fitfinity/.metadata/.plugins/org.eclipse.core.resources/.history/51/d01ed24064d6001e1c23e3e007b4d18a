@@ -1,0 +1,113 @@
+package viewSalaryByDr;
+
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+
+@WebServlet("/viewMonthly")
+public class viewMonthly extends HttpServlet {
+	private static final long serialVersionUID = 1L;
+       
+    
+    public viewMonthly() {
+        
+    }
+
+	
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		
+	}
+
+	
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		String target = request.getParameter("doctorId");
+		String doctorPwd = request.getParameter("password");
+		
+		boolean correctID = matchDrID(target);
+		boolean correctPwd = pwdAuth(doctorPwd, target);
+		
+		if(correctID){
+			if(correctPwd) {
+				request.setAttribute("targetDr", target);
+				request.getRequestDispatcher("/Salary_(Doctor)/yourMonthlySal.jsp").forward(request, response);
+			}
+			else {
+				request.setAttribute("message2","Wrong Password Entered");
+				request.setAttribute("DID", target);
+				request.getRequestDispatcher("/Salary_(Doctor)/monthlySalary.jsp").forward(request, response);
+			}
+		}
+		else {
+			request.setAttribute("message1", "Such a doctor's ID doesn't exist");
+			request.getRequestDispatcher("/Salary_(Doctor)/monthlySalary.jsp").forward(request, response);
+		}	
+		
+	}
+	
+	public Boolean matchDrID(String drID) {
+		
+		boolean flag = false;
+		
+		try {
+			Class.forName("com.mysql.cj.jdbc.Driver");
+			
+			Connection c = DriverManager.getConnection("jdbc:mysql://localhost:3306/healthcaresystem","root", "");
+			Statement s = c.createStatement();
+			ResultSet r = s.executeQuery("SELECT * FROM doctors");
+			
+			while(r.next()) {
+				String existingID = r.getString("doctorID");
+				if (existingID.equals(drID)) {
+	                flag = true;
+	                break; 
+	            }
+			}
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return flag;
+	}
+	
+	public Boolean pwdAuth(String Pwd, String id)
+	{
+		Boolean flag2 = false;
+		try {
+			Class.forName("com.mysql.cj.jdbc.Driver");
+			
+			Connection c = DriverManager.getConnection("jdbc:mysql://localhost:3306/healthcaresystem","root", "");
+			String query = "SELECT doctorPassword FROM doctors WHERE doctorID =?";
+			
+			PreparedStatement p = c.prepareStatement(query);
+			p.setString(1, id);
+			ResultSet r = p.executeQuery();
+			
+			while (r.next())
+			{
+				String dbPwd = r.getString("doctorPassword");
+				if (Pwd.equals(dbPwd))
+				{
+					flag2 = true;
+					break;
+				}
+			}
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return flag2;
+	}
+
+}

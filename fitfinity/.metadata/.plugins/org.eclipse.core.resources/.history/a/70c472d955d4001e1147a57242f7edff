@@ -1,0 +1,215 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.io.*,java.util.*,java.sql.*"%>
+<%@ page import="javax.servlet.http.*,javax.servlet.*" %>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Doctor Profile</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+        	font-family: "Poppins", sans-serif;
+            padding-top: 20px;
+        }
+        .card {
+            margin-bottom: 20px;
+        }
+ 
+    	<style type="text/css">
+
+      body {
+        background-color: #f0f0f0;
+        font-family: "Poppins", sans-serif;
+      }
+
+      .doctor-card {
+        color: #ffffff;
+        padding: 20px;
+        margin-bottom: 20px;
+        position: relative;
+        display: flex; /* Use flexbox for layout */
+        align-items: center; /* Center align content vertically */
+      }
+
+      .doctor-card h5 {
+        margin-bottom: 15px;
+      }
+
+      .doctor-card h3 {
+        margin-top: 20px;
+        color: #00594d;
+        font-family: "Poppins", sans-serif;
+      }
+
+      .doctor-card p {
+      	color: #646569;
+        font-size: 17px;
+        margin-bottom: 5px;
+      }
+
+      .doctor-card .user-img {
+        width: 170px; /* Set width of the image */
+        height: auto; /* Maintain aspect ratio */
+        margin-top: 20px%;
+        border-radius: 10%; /* Rounded corners */
+        margin-left: 20px; /* Margin for spacing */
+        margin-right: 50px; /* Margin for spacing */
+      }
+
+      .doctor-card-content {
+        flex: 1; /* Take up remaining space */
+      }
+
+      .doctor-card a {
+        text-decoration: none;
+        color: #e8bd70;
+      }
+
+      .doctor-card-tag {
+      background-color: #e8bd70;
+      color: #ffffff;
+      border-radius: 5px;
+      padding: 5px 10px;
+      margin-bottom: 10px;
+      margin-right: 10px;
+      font-size: 14px;
+      text-transform: uppercase;
+    }
+    
+    btn:hover {
+	background-color: #E8BD70;
+	color: white;
+}
+	</style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        function bookAppointment(doctorID,patientID, shift, day) {
+            if (confirm("Are you sure you want to book this appointment?")) {
+                $.ajax({
+                    url: 'BookAppointmentServlet',
+                    method: 'POST',
+                    data: { doctorID: doctorID, patientID: patientID, shift: shift, day: day },
+                    success: function(response) {
+                        alert(response);
+                    },
+                    error: function(xhr, status, error) {
+                        alert("An error occurred while booking the appointment.");
+                        console.error(error);
+                    }
+                });
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mt-5" style="color: #00594d; margin-bottom: -40px;">Doctor Profile</h1>
+        <div class="mt-4">
+            <%-- Retrieve doctorID parameter from the request --%>
+            <% String doctorID = request.getParameter("doctorID"); %>
+			<% String patientID = request.getParameter("patientID"); %>
+            <%-- Fetch doctor information from the database using JDBC --%>
+            <%
+                Connection conn = null;
+                PreparedStatement pstmtDoctor = null;
+                PreparedStatement pstmtSchedule = null;
+                ResultSet rsDoctor = null;
+                ResultSet rsSchedule = null;
+                try {
+                    Class.forName("com.mysql.jdbc.Driver");
+                    conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/fitfinity", "root", "");
+
+                    // Query to retrieve doctor information based on doctorID
+                   String sql = "SELECT d.doctorID, d.doctorName, d.doctorEmail, d.doctorTel, dp.deptName, r.roleName " +
+                   "FROM doctors d " +
+                   "LEFT JOIN departments dp ON d.deptID = dp.deptID " +
+                   "LEFT JOIN roles r using (roleID)" +
+                   "WHERE d.doctorID = ?";
+                    pstmtDoctor = conn.prepareStatement(sql);
+                    pstmtDoctor.setString(1, doctorID);
+                    rsDoctor = pstmtDoctor.executeQuery();
+
+                    // Display doctor information
+                    if (rsDoctor.next()) {
+            %>
+                        </div>
+                           	<div class="col-md-6">
+						    <div class="doctor-card">
+						        <div class="doctor-card-content">
+						            <h3> Dr. <%= rsDoctor.getString("doctorName") %></h3>
+						            <p>Email: <%= rsDoctor.getString("doctorEmail") %></p>
+						            <p>Tel: <%= rsDoctor.getString("doctorTel") %></p>
+						            <p>Department: <%= rsDoctor.getString("deptName")%></p>
+						            <p>Role: <%= rsDoctor.getString("roleName")%></p>
+						         
+						        </div>
+						        <% if((rsDoctor.getString("doctorName").substring(0,2).equals("U ")){ %>
+						        <img class="user-img" src="./assets/image/doctorProfile/maleDr.png" alt="Doctor Image" />
+						        <%}else{ %>
+						        <img class="user-img" src="./assets/image/doctorProfile/maleDr.png" alt="Doctor Image" />
+						        <% } %>
+						    </div>
+			        		</div>
+
+                        <!-- Query to retrieve doctor's schedule -->
+                        <h2 class="mt-4" style="color: #00594d;">Doctor's Schedule</h2>
+                        <table class="table">
+                            <thead>
+                                <tr style="border-bottom: 1px solid #E8BD70">
+                                    <th>Day</th>
+                                    <th>Shift</th>
+                                    <th>Action</th> <!-- New column for action button -->
+                                </tr>
+                            </thead>
+                            <tbody>
+                            <% 
+                                // Query to retrieve doctor's schedule based on doctorID
+                                String sqlSchedule = "SELECT * FROM doctorschedules WHERE doctorID = ?";
+                                pstmtSchedule = conn.prepareStatement(sqlSchedule);
+                                pstmtSchedule.setString(1, doctorID);
+                                rsSchedule = pstmtSchedule.executeQuery();
+
+                                // Display doctor's schedule
+                                while (rsSchedule.next()) {
+                            %>
+                                    <tr style="border-bottom: 1px solid #E8BD70">
+                                        <td><%= rsSchedule.getString("day") %></td>
+                                        <td><%= rsSchedule.getString("shift") %></td>
+                                        <td>
+                                            <button style="background-color: #0bb288; color: white;" class="btn" onclick="bookAppointment('<%= doctorID %>', '<%= patientID %>' , '<%= rsSchedule.getString("shift") %>', '<%= rsSchedule.getString("day") %>' )">Book Appointment</button>
+                                        </td> <!-- Button to book appointment -->
+                                    </tr>
+                            <%
+                                }
+                            %>
+                            </tbody>
+                        </table>
+            <%
+                    } else {
+            %>
+                        <p class="alert alert-danger">Doctor not found</p>
+            <%
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    // Close resources
+                    try {
+                        if (rsDoctor != null) rsDoctor.close();
+                        if (pstmtDoctor != null) pstmtDoctor.close();
+                        if (rsSchedule != null) rsSchedule.close();
+                        if (pstmtSchedule != null) pstmtSchedule.close();
+                        if (conn != null) conn.close();
+                    } catch (SQLException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            %>
+        </div>
+    </div>
+</body>
+</html>

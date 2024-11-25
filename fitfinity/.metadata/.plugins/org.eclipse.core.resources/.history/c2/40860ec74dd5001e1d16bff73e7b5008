@@ -1,0 +1,53 @@
+<%@ page import="java.io.*,java.net.*" %>
+<%
+    String gRecaptchaResponse = request.getParameter("g-recaptcha-response");
+    if(gRecaptchaResponse == null || "".equals(gRecaptchaResponse)) {
+        out.print("<div class='error'>Please check the reCAPTCHA box.</div>");
+    } else {
+        String url = "https://www.google.com/recaptcha/api/siteverify";
+        String params = "secret=6LeGhoEpAAAAALW4yJ1bkRUWHQ9OvsBxWeBDJ-r-&response=" + gRecaptchaResponse;
+
+        HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
+        conn.setDoOutput(true);
+        conn.setRequestMethod("POST");
+        conn.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
+
+        DataOutputStream wr = new DataOutputStream(conn.getOutputStream());
+        wr.writeBytes(params);
+        wr.flush();
+        wr.close();
+
+        BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+        String inputLine;
+        StringBuilder sb = new StringBuilder();
+
+        while ((inputLine = in.readLine()) != null) {
+            sb.append(inputLine);
+        }
+        in.close();
+
+        // Parse the response manually (this is a very basic example)
+        if(sb.toString().contains("\"success\": true")) {
+            response.sendRedirect("./.jsp");
+        } else {
+            out.print("<div class='error'>Failed reCAPTCHA test. Please try again.</div>");
+        }
+    }
+%>
+<html>
+<head>
+    <style>
+        .error {
+            color: #D8000C;
+            background-color: #FFD2D2;
+            margin: 10px;
+            padding: 12px;
+            border-radius: 4px;
+            font-family: Arial, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <!-- Your form goes here -->
+</body>
+</html>

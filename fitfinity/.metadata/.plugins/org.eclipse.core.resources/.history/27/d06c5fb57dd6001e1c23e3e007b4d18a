@@ -1,0 +1,96 @@
+package Booking;
+
+import java.io.*;
+import java.sql.*;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.*;
+
+@WebServlet("/DeleteDoctorRecordsServlet")
+public class DeleteDoctorRecordsServlet extends HttpServlet {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // Retrieve doctorID parameter from the form
+        String doctorID = request.getParameter("doctorID");
+
+        // Check if doctorID is empty
+        if (doctorID == null || doctorID.isEmpty()) {
+            response.sendRedirect("adminDashboard.jsp?error=DoctorID is required");
+            return;
+        }
+
+        // Check if doctorID exists in the database
+        if (!doctorExists(doctorID)) {
+            response.sendRedirect("adminDashboard.jsp?error=Doctor ID " + doctorID + " does not exist");
+            return;
+        }
+
+        // Delete records associated with the given doctorID from the database
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        try {
+            // Load the MySQL JDBC driver
+            Class.forName("com.mysql.jdbc.Driver");
+
+            // Connect to the database
+            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/fitfinity", "root", "");
+
+            // Prepare SQL statement for deletion
+            String sql = "DELETE FROM doctorschedules WHERE doctorID = ?";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, doctorID);
+
+            // Execute the SQL statement
+            int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected > 0) {
+                // Records deleted successfully
+                response.sendRedirect("adminDashboard.jsp?success=Records for Doctor ID " + doctorID + " deleted successfully");
+            } else {
+                // No records found for the given doctorID
+                response.sendRedirect("adminDashboard.jsp?error=No records found for Doctor ID " + doctorID);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.sendRedirect("adminDashboard.jsp?error=An error occurred while deleting records");
+        } finally {
+            // Close resources
+            try {
+                if (pstmt != null) pstmt.close();
+                if (conn != null) conn.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    // Method to check if the given doctorID exists in the database
+    private boolean doctorExists(String doctorID) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            // Connect to the database
+            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/fitfinity", "root", "");
+
+            // Prepare SQL statement to check if the doctorID exists
+            String sql = "SELECT * FROM doctorschedules WHERE doctorID = ?";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, doctorID);
+
+            // Execute the SQL statement
+            rs = pstmt.executeQuery();
+            return rs.next(); // Return true if doctorID exists, false otherwise
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            // Close resources
+            try {
+                if (rs != null) rs.close();
+                if (pstmt != null) pstmt.close();
+                if (conn != null) conn.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+}

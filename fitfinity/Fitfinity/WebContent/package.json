@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "bootstrap": "^5.3.2",
+    "bootstrap-autocomplete": "^2.3.7",
+    "jquery": "^3.7.1"
+  }
+}

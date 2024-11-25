@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<%@page import="UpdateProfile.*"%>
+<%@page import="java.util.*" %>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patient Profile</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Custom CSS -->
+  <style>
+    /* Add custom styles here */
+    body {
+      background-color: #f8f9fa;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .profile-card {
+      background-color: #fff;
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+      padding: 30px;
+      margin-top: 50px;
+    }
+    .edit-button {
+      background-color: #0bb288;
+      border: none;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .edit-button:hover {
+      background-color: #218838;
+    }
+    .back-button {
+      background-color: #0bb288;
+      border: none;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .back-button:hover {
+      background-color: #218838;
+    }
+    .form-group label {
+      font-weight: bold;
+      color: #495057;
+    }
+    .form-control {
+      border-radius: 8px;
+      border: 1px solid #ced4da;
+    }
+    h2 {
+      color: #0bb288;
+    }
+    .error-message {
+            
+            font-weight: bold;
+            color: red;
+            font-size: 15px;
+        }
+    .success-message {
+            
+            font-weight: bold;
+            color: #0bb288;
+            font-size: 15px bold;
+        }
+        
+  </style>
+</head>
+<body>
+<div class="error-message">
+  <c:out value="${message}" />
+</div>
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="profile-card">
+        <h2 class="mb-4">Patient Profile</h2>
+        <% String userid = request.getParameter("userid"); 
+          	 String email = request.getParameter("email"); 
+             String username = request.getParameter("username");
+             ProfileDAO dao = new ProfileDAO();
+             
+          %>
+        
+        
+        
+        <form id="updateForm" action="${pageContext.request.contextPath}/UpdateNameServlet" method="post">
+		    <div class="form-group">
+		        <label for="patientID">Patient ID</label>
+		        <input type="text" class="form-control" id="patientID" name="userid" value="<%= userid %>" disabled>
+		        <!-- Add hidden input field for userid -->
+		        <input type="hidden" name="userid" value="<%= userid %>">
+		    </div>
+		    
+		    <div class="form-group">
+		        <label for="patientName">Patient Name</label>
+		        <div class="d-flex align-items-center">
+		            <input type="text" class="form-control mr-3" id="patientName" name="updatedName" value="<%= dao.getName(userid) %>">
+		            <button class="edit-button" type="submit">Edit</button>
+		        </div>
+		        <% String message1 = (String) request.getAttribute("message1");
+        		   	   if (message1!= null)
+        		   	   {
+        		   %>
+        		   
+        		   <div class="success-message"> <%= message1 %> </div> 
+        		   <% } %>
+		        <% String message2 = (String) request.getAttribute("message2");
+        		   	   if (message2!= null)
+        		   	   {
+        		   %>
+        		   
+        		   <div class="error-message"> <%= message2 %> </div> 
+        		   <% } %>
+		    </div>
+		</form>
+
+
+        <div class="form-group">
+          <label for="patientEmail">Patient Email</label>
+          <input type="email" class="form-control" id="patientEmail" value="<%=dao.getEmail(userid) %>" disabled>
+        </div>
+        <div class="form-group">
+          <label for="patientNRC">Patient NRC</label>
+          <input type="text" class="form-control" id="patientNRC" value="<%=dao.getNRC(userid)%>" disabled>
+        </div>
+        <div class="form-group">
+          <label for="patientDOB">Patient Date of Birth</label>
+          <input type="text" class="form-control" id="patientDOB" value="<%=dao.getDOB(userid) %>" disabled>
+        </div>
+        
+        <form id="updatePhoneForm" action="http://localhost:8080/SignUp/UpdatePhoneServlet" method="post">
+		    <div class="form-group">
+		        <!-- Add hidden input field for userid -->
+		        <input type="hidden" name="userid" value="<%= userid %>">
+		    </div>
+		    
+		    <div class="form-group">
+		        <label for="patientPhone">Patient Phone</label>
+		        <div class="d-flex align-items-center">
+		            <input type="text" class="form-control mr-3" id="patientPhone" name="updatedPhone" value="<%= dao.getPhone(userid) %>">
+		            <button class="edit-button" type="submit">Edit</button>
+		        </div>
+		        <% String message3 = (String) request.getAttribute("message3");
+        		   	   if (message3!= null)
+        		   	   {
+        		   %>
+        		   
+        		   <div class="success-message"> <%= message3 %> </div> 
+        		   <% } %>
+		        <% String message4 = (String) request.getAttribute("message4");
+        		   	   if (message4!= null)
+        		   	   {
+        		   %>
+        		   
+        		   <div class="error-message"> <%= message4 %> </div> 
+        		   <% } %>
+		    </div>
+		</form>
+        
+        
+        <div class="form-group">
+          <label for="bloodType">Blood Type</label>
+          <input type="text" class="form-control" id="bloodType" value="<%=dao.getBlood(userid) %>" disabled>
+        </div>
+        <div class="form-group">
+          <label for="gender">Gender</label>
+          <input type="text" class="form-control" id="gender" value="<%=dao.getGender(userid) %>" disabled>
+        </div>
+		
+        <!-- Back Button -->
+        <button class="back-button mt-4" ><a href="./patientDashboard">Back</a></button>
+        
+        
+       	
+       
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<!-- JavaScript to go back to the previous page -->
+<script>
+  function goBack() {
+    window.history.back();
+  }
+  
+  
+</script>
+
+</body>
+</html>

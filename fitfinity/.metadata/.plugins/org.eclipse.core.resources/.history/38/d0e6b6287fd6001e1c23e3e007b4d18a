@@ -1,0 +1,99 @@
+package Booking;
+
+import java.io.*;
+import java.sql.*;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.*;
+
+@WebServlet("/DeleteDoctorRecordsServlet")
+public class DeleteDoctorRecordsServlet extends HttpServlet {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // Retrieve doctorID from the form
+        String doctorID = request.getParameter("doctorID");
+
+        // Delete appointments related to the provided doctorID from the database
+        boolean success = deleteAppointmentsByDoctorID(doctorID);
+
+        // Check if deletion was successful
+        if (success) {
+            // Redirect back to the admin dashboard page
+        	
+            response.sendRedirect("adminDashboard.jsp");
+        } else {
+            // Display error message on the same page
+            PrintWriter out = response.getWriter();
+            out.println("<script>alert('Doctor ID not found in the appointments table.');</script>");
+            out.println("<script>window.location.href='adminDashboard.jsp';</script>");
+        }
+    }
+
+    // Method to delete appointments from the database based on doctorID
+    private boolean deleteAppointmentsByDoctorID(String doctorID) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        try {
+            // Load the MySQL JDBC driver
+            Class.forName("com.mysql.jdbc.Driver");
+
+            // Connect to the database
+            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/fitfinity", "root", "");
+
+            // Check if the doctorID exists in the appointments table
+            boolean doctorExists = doctorExistsInAppointments(conn, doctorID);
+
+            // If doctorID does not exist, return false
+            if (!doctorExists) {
+                return false;
+            }
+
+            // Prepare SQL statement to delete appointments by doctorID
+            String sql = "DELETE FROM appointments WHERE doctorID = ?";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, doctorID);
+
+            // Execute the SQL statement
+            pstmt.executeUpdate();
+
+            return true;
+        } catch (ClassNotFoundException | SQLException e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            // Close resources
+            try {
+                if (pstmt != null) pstmt.close();
+                if (conn != null) conn.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    // Method to check if the doctorID exists in the appointments table
+    private boolean doctorExistsInAppointments(Connection conn, String doctorID) throws SQLException {
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            // Prepare SQL statement to check if the doctorID exists
+            String sql = "SELECT COUNT(*) FROM appointments WHERE doctorID = ?";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, doctorID);
+
+            // Execute the SQL statement
+            rs = pstmt.executeQuery();
+
+            // Get the count of rows returned
+            if (rs.next()) {
+                int count = rs.getInt(1);
+                return count > 0;
+            }
+
+            return false;
+        } finally {
+            // Close resources
+            if (rs != null) rs.close();
+            if (pstmt != null) pstmt.close();
+        }
+    }
+}

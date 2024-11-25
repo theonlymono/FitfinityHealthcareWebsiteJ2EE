@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<section name="Workbench">
+	<section name="org.eclipse.ui.texteditor.FindReplaceDialog">
+		<item key="selection" value="fitfinity"/>
+		<item key="wrap" value="true"/>
+		<item key="casesensitive" value="false"/>
+		<item key="wholeword" value="false"/>
+		<item key="incremental" value="false"/>
+		<item key="isRegEx" value="false"/>
+		<list key="findhistory">
+			<item value="healthcaresystem"/>
+			<item value="role"/>
+			<item value="appointmentDate"/>
+			<item value="appointment"/>
+			<item value="about"/>
+			<item value="#about"/>
+			<item value="dbID"/>
+			<item value="border"/>
+			<item value="3575fe"/>
+			<item value="primary"/>
+			<item value="confirm"/>
+			<item value="target=&quot;_blank&quot; "/>
+			<item value="remember"/>
+			<item value="departmentId"/>
+			<item value="deptid"/>
+		</list>
+		<list key="replacehistory">
+			<item value="fitfinity"/>
+			<item value="roles"/>
+			<item value="appointmentData"/>
+			<item value="appointments"/>
+			<item value="0bb288"/>
+			<item value="success"/>
+		</list>
+	</section>
+	<section name="org.eclipse.ui.texteditor.FindReplaceDialog_dialogBounds">
+		<item key="DIALOG_X_ORIGIN" value="1086"/>
+		<item key="DIALOG_Y_ORIGIN" value="201"/>
+		<item key="DIALOG_WIDTH" value="414"/>
+		<item key="DIALOG_HEIGHT" value="404"/>
+		<item key="DIALOG_FONT_NAME" value="1|Segoe UI|9.0|0|WINDOWS|1|-15|0|0|0|400|0|0|0|1|0|0|0|0|Segoe UI"/>
+	</section>
+</section>

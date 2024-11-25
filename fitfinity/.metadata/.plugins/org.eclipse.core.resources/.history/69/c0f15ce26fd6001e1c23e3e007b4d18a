@@ -1,0 +1,173 @@
+package EditHistory;
+
+import java.io.IOException;
+import java.security.PublicKey;
+import java.sql.*;
+import java.util.FormatFlagsConversionMismatchException;
+import java.util.Iterator;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.el.parser.BooleanNode;
+
+
+@WebServlet("/HistoryServlet")
+public class HistoryServlet extends HttpServlet {
+	private static final long serialVersionUID = 1L;
+	private String m = null;
+	
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		
+		
+		String patientID = request.getParameter("patientID");
+		String doctorID = request.getParameter("doctorID");
+		String allergies = request.getParameter("Allergies");
+		String surgical = request.getParameter("Surgical");
+		String past = request.getParameter("pastHistory");
+		String current = request.getParameter("currentCondition");
+		String family = request.getParameter("familyHistory");
+		String[] medication = request.getParameterValues("medication");
+		
+		Boolean correctPatient = checkPatientID(patientID);
+		Boolean correctDoctor = checkDoctorID(doctorID, patientID);
+		
+		
+		
+		
+		StringBuilder sb = new StringBuilder();
+		
+		
+		for (int i = 0; i < medication.length; i+= 2) {
+			String mm = medication[i];
+			String mg = (i + 1 < medication.length) ? medication[i + 1] : "";
+			
+			sb.append(mm).append(" ").append(mg);
+			
+			if (i + 2 < medication.length) {
+                sb.append(", ");
+            }
+		} 
+		
+		
+		if(!correctPatient || !correctDoctor)
+		{
+			if(correctPatient == false)
+			{
+				request.setAttribute("message1", "Incorrect Patient ID");
+			}
+			if(correctDoctor == false)
+			{
+				request.setAttribute("message2", "Incorrect Doctor ID");
+			}
+			request.setAttribute("patientID", patientID);
+			request.setAttribute("doctorID", doctorID);
+			request.setAttribute("allergies", allergies);
+			request.setAttribute("surgical", surgical);
+			request.setAttribute("past", past);
+			request.setAttribute("current", current);
+			request.setAttribute("family", family);
+			request.setAttribute("medication", medication);
+		}
+		
+		if(correctPatient && correctDoctor) {
+			try {
+				Class.forName("com.mysql.cj.jdbc.Driver");
+				Connection c = DriverManager.getConnection("jdbc:mysql://localhost:3306/fitfinity","root", "");
+				Statement s = c.createStatement();
+				ResultSet resultSet = s.executeQuery("SELECT * FROM patients");
+				
+				String sql = "INSERT INTO history(patientID, doctorID, dateOfVisit, allergies, surgicalProcedures, pastMedHistory, currentMedHistory, familyHistory, medication) VALUES ('"
+						+ patientID + "','" + doctorID + "',CURDATE(),'" + allergies + "','"
+						+ surgical + "','" + past + "','" + current + "','" + family + "','" + sb + "')";
+				
+				int res = s.executeUpdate(sql);
+				
+				if (res == 1) {
+					request.setAttribute("flag", "success");
+					request.setAttribute("userid", doctorID);
+					
+				    request.getRequestDispatcher("./doctorDashboard.jsp").forward(request, response);
+				}
+				
+				resultSet.close();
+				c.close();
+				s.close();
+				
+			} catch (Exception e) {
+				e.getStackTrace();
+			}
+		} else {
+			request.setAttribute("message", "Patient History Editing Failed");
+			request.getRequestDispatcher("./AddHistory.jsp").forward(request, response);
+		}
+	}
+	
+	public Boolean checkPatientID(String patientID) {
+
+
+		Boolean result = false;
+		
+		try {
+			Class.forName("com.mysql.cj.jdbc.Driver");
+			
+			Connection c = DriverManager.getConnection("jdbc:mysql://localhost:3306/fitfinity","root", "");
+			Statement s = c.createStatement();
+			ResultSet r = s.executeQuery("SELECT patientID FROM appointments");
+			
+			while(r.next()) {
+				String dbID = r.getString("patientID");
+                if (patientID.equals(dbID)) {
+                    result = true;
+                    break;
+                }
+			}
+			
+			
+		} catch (Exception e) {
+			e.getStackTrace();
+		}
+		
+		return result;
+	}
+	
+	public Boolean checkDoctorID(String doctorID, String patientID) {	
+
+
+		
+		Boolean res=false;
+		
+		try {
+			
+			Class.forName("com.mysql.cj.jdbc.Driver");
+			
+			Connection c = DriverManager.getConnection("jdbc:mysql://localhost:3306/fitfinity","root", "");
+			
+			String sql = "SELECT doctorID FROM appointments WHERE patientID=? AND appointmentData=CURDATE()";
+			PreparedStatement ps = c.prepareStatement(sql);
+			ps.setString(1, patientID);
+			
+			ResultSet r = ps.executeQuery();
+			
+			while(r.next()) {
+				String dbID = r.getString("doctorID");
+                if (doctorID.equals(dbID)) {
+                    res = true;
+                    break;
+                }
+			}
+			
+		} catch (Exception e) {
+			e.getStackTrace();
+		}
+		
+		return res;
+	}
+	
+	
+}
+
+

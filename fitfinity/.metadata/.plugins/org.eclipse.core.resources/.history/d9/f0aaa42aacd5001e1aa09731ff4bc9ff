@@ -1,0 +1,101 @@
+package AddDoctorSchedule;
+
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+@WebServlet("/AddDoctorSchedule")
+public class AddDoctorSchedule extends HttpServlet {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String doctorID = request.getParameter("doctorID");
+        String[] shifts = request.getParameterValues("shift");
+        
+        // Check if shifts are empty
+        if (shifts == null || shifts.length == 0) {
+            // Redirect back to the JSP page with error parameter
+            response.sendRedirect("DrSchedule.jsp?error=Shift is empty");
+            return;
+        }
+        
+        // JDBC URL, username, and password for your MySQL connection
+        String jdbcURL = "jdbc:mysql://localhost:3306/fitfinity";
+        String username = "root";
+        String password = "";
+        
+        Connection connection = null;
+        PreparedStatement statement = null;
+        
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            connection = DriverManager.getConnection(jdbcURL, username, password);
+            
+            // Check if the doctor has already been scheduled for any of the selected shifts
+            String checkExistingScheduleSql = "SELECT * FROM doctorschedules WHERE doctorID = ? AND (";
+            for (int i = 0; i < shifts.length; i++) {
+                if (i > 0) {
+                    checkExistingScheduleSql += " OR ";
+                }
+                checkExistingScheduleSql += "shift = ?";
+            }
+            checkExistingScheduleSql += ")";
+            PreparedStatement checkExistingScheduleStmt = connection.prepareStatement(checkExistingScheduleSql);
+            checkExistingScheduleStmt.setString(1, doctorID);
+            for (int i = 0; i < shifts.length; i++) {
+                checkExistingScheduleStmt.setString(i + 2, shifts[i]);
+            }
+            ResultSet resultSet = checkExistingScheduleStmt.executeQuery();
+            if (resultSet.next()) {
+                // Redirect back to the JSP page with error parameter
+                response.sendRedirect("DrSchedule.jsp?error=Doctor is already scheduled for one or more selected shifts");
+                return;
+            }
+            
+            // SQL statement to insert data into the doctorschedules table
+            String insertScheduleSql = "INSERT INTO doctorschedules (doctorID, day, shift) VALUES (?, ?, ?)";
+            statement = connection.prepareStatement(insertScheduleSql);
+            
+            // Insert each selected shift into the database
+            for (String shift : shifts) {
+                String[] shiftParts = shift.split(",");
+                String day = shiftParts[0];
+                String time = shiftParts[1].trim();
+                statement.setString(1, doctorID);
+                statement.setString(2, day);
+                statement.setString(3, time);
+                statement.executeUpdate();
+            }
+            
+            // Close resources
+            statement.close();
+            connection.close();
+            
+            // Redirect back to the JSP page with success parameter
+            response.sendRedirect("DrSchedule.jsp?success=true");
+        } catch (ClassNotFoundException | SQLException e) {
+            e.printStackTrace();
+            
+            // Redirect back to the JSP page with error parameter
+            response.sendRedirect("DrSchedule.jsp?error=An error occurred while processing the request");
+        } finally {
+            // Close resources in finally block to ensure they are closed even if an exception occurs
+            try {
+                if (statement != null) {
+                    statement.close();
+                }
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}

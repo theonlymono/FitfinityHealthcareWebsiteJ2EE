@@ -1,0 +1,228 @@
+package PatientSI;
+
+import java.io.IOException;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+
+import javax.security.auth.message.callback.PrivateKeyCallback.Request;
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import com.mysql.cj.exceptions.RSAException;
+
+import java.sql.Statement;
+
+@WebServlet("/SignINServlet")
+public class SignINServlet extends HttpServlet {
+    private static final long serialVersionUID = 1L;
+    private String msg;
+    private String msg2;
+
+    public SignINServlet() {
+        super();
+        // TODO Auto-generated constructor stub
+    }
+
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
+    }
+
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
+        String loginEmail = request.getParameter("loginEmail");
+        String loginPwd = request.getParameter("loginPwd");
+        String role = request.getParameter("userRole");
+
+        Boolean validEmail = emailAuth(loginEmail, role);
+        Boolean validPwd = pwdAuth(loginPwd, loginEmail, role);
+        String patient = getPName(loginEmail, role);
+
+        if (validEmail) {
+            if (validPwd) {
+                if(role.equals("Patient")) {
+                	request.getRequestDispatcher("./patientDashboard.jsp").forward(request, response);
+                }else if(role.equals("Doctor")) {
+                	request.getRequestDispatcher("./doctorDashboard.jsp").forward(request, response);
+                }else if(role.equals("Admin")) {
+                	request.getRequestDispatcher("./adminDashboard.jsp").forward(request, response);
+                }
+            } else {
+                request.setAttribute("message2", "Wrong Password Entered");
+                request.setAttribute("loginEmail", loginEmail);
+                request.getRequestDispatcher("./LogInPage.jsp").forward(request, response);
+            }
+        } else {
+            request.setAttribute("message3", "Sorry, we can't find an account with that email.");
+            request.setAttribute("loginPwd", loginPwd);
+            request.getRequestDispatcher("./LogInPage.jsp").forward(request, response);
+        }
+    }
+
+    public Boolean emailAuth(String Email, String role) {
+
+        Boolean flag = false;
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+
+            Connection c = DriverManager.getConnection("jdbc:mysql://localhost:3306/fitfinity", "root", "");
+            Statement s = c.createStatement();
+
+            if (role.equals("Patient")) {
+                ResultSet r = s.executeQuery("SELECT * FROM patients");
+
+                while (r.next()) {
+                    String dbEmail = r.getString("patientEmail");
+
+                    if (Email.equals(dbEmail)) {
+                        flag = true;
+                        break;
+                    } else {
+                        flag = false;
+                    }
+                }
+            } else if (role.equals("Doctor")) {
+                ResultSet r = s.executeQuery("SELECT * FROM doctors");
+
+                while (r.next()) {
+                    String dbEmail = r.getString("doctorEmail");
+                    if (Email.equals(dbEmail)) {
+                        flag = true;
+                        break;
+                    } else {
+                        flag = false;
+                    }
+                }
+            } else if (role.equals("Admin")) {
+                ResultSet r = s.executeQuery("SELECT * FROM admin");
+
+                while (r.next()) {
+                    String dbEmail = r.getString("adminEmail");
+                    if (Email.equals(dbEmail)) {
+                        flag = true;
+                        break;
+                    } else {
+                        flag = false;
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+
+        }
+
+        return flag;
+    }
+
+    public Boolean pwdAuth(String Pwd, String Email, String role) {
+        Boolean flag2 = false;
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+
+            Connection c = DriverManager.getConnection("jdbc:mysql://localhost:3306/fitfinity", "root", "");
+
+            if (role.equals("Patient")) {
+                PreparedStatement ps = c.prepareStatement("SELECT * FROM patients WHERE patientEmail =?");
+                ps.setString(1, Email);
+                ResultSet r = ps.executeQuery();
+                Request.setAt
+                while (r.next()) {
+                    String dbPwd = r.getString("patientPassword");
+
+                    if (Pwd.equals(dbPwd)) {
+                        flag2 = true;
+                        break;
+                    } else {
+                        flag2 = false;
+                    }
+                }
+            } else if (role.equals("Doctor")) {
+                PreparedStatement ps = c.prepareStatement("SELECT * FROM doctors WHERE doctorEmail =?");
+                ps.setString(1, Email);
+                ResultSet r = ps.executeQuery();
+
+                while (r.next()) {
+                    String dbPwd = r.getString("doctorPassword");
+
+                    if (Pwd.equals(dbPwd)) {
+                        flag2 = true;
+                        break;
+                    } else {
+                        flag2 = false;
+                    }
+                }
+            } else if (role.equals("Admin")) {
+                PreparedStatement ps = c.prepareStatement("SELECT * FROM admin WHERE adminEmail =?");
+                ps.setString(1, Email);
+                ResultSet r = ps.executeQuery();
+
+                while (r.next()) {
+                    String dbPwd = r.getString("adminPwd");
+
+                    if (Pwd.equals(dbPwd)) {
+                        flag2 = true;
+                        break;
+                    } else {
+                        flag2 = false;
+                    }
+                }
+            }
+        } catch (Exception e) {
+
+        }
+
+        return flag2;
+    }
+
+    public String getPName(String mail, String role) {
+        String name = null;
+
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+
+            Connection c = DriverManager.getConnection("jdbc:mysql://localhost:3306/fitfinity", "root", "");
+
+            if (role.equals("Patient")) {
+                PreparedStatement p = c.prepareStatement("SELECT * FROM patients WHERE patientEmail = ?");
+                p.setString(1, mail);
+
+                ResultSet r = p.executeQuery();
+
+                while (r.next()) {
+                    name = r.getString("patientName");
+                }
+            } else if (role.equals("Doctor")) {
+                PreparedStatement p = c.prepareStatement("SELECT * FROM doctors WHERE doctorEmail =?");
+                p.setString(1, mail);
+
+                ResultSet r = p.executeQuery();
+
+                while (r.next()) {
+                    name = r.getString("doctorName");
+                }
+            } else if (role.equals("Admin")) {
+                PreparedStatement p = c.prepareStatement("SELECT * FROM admin WHERE adminEmail =?");
+                p.setString(1, mail);
+
+                ResultSet r = p.executeQuery();
+
+                while (r.next()) {
+                    name = r.getString("adminName");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return name;
+    }
+}
+

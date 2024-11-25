@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Form Validation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="./image/logo.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+            font-family: "Poppins", sans-serif;
+        }
+
+        body {
+            background: rgb(53,117,254);
+            background: linear-gradient(180deg, #0bb288 0%, #0bb288 0%, white 100%);
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            background-size: cover;
+        }
+
+        .container {
+            width: 90vw;
+            max-width: 600px;
+            padding: 2em 1.5em;
+            background-color: #ffffff;
+            margin: 70px auto;
+            border-radius: 30px;
+        }
+
+        h4 {
+            font-size: 1.5em;
+        }
+
+        .input-section {
+            margin: 0.5em 0;
+        }
+
+        label, .error-message {
+            display: block;
+            font-size: 1em;
+        }
+
+        label {
+            margin-bottom: 0.5em;
+            font-weight: 500;
+        }
+
+        .error-message {
+            margin-top: 0.2em;
+            color: red;
+        }
+
+        input, select, button {
+            display: block;
+            outline: none;
+            border: 1px solid #75777d;
+            width: 100%;
+            padding: 12px;
+            border-radius: 30px;
+        }
+
+        input[type="radio"] {
+            width: fit-content;
+        }
+
+        button {
+            font-size: 1em;
+            background-color: #0bb288;
+            border: 1px solid #75777d;
+            color: #ffffff;
+            padding: 0.8em 0;
+            margin-top: 2em;
+        }
+
+        .required-color {
+            color: #ff4747;
+        }
+
+        .error {
+            border-color: #ff4747;
+        }
+
+        .valid {
+            border-color: #37a137;
+        }
+
+        .hide {
+            display: none;
+        }
+
+        @media only screen and (max-width: 450px) {
+            .container {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+<%String DrIDSet; %>
+<div class="container">
+    <form action="${pageContext.request.contextPath}/AddDoctor" method="post">
+        <h4>Create Doctor's Account</h4>
+
+        <!-- Doctor ID -->
+        <div class="input-section">
+            <label>
+                <i class="fa-solid fa-id-card-clip" style="color: #0bb288;"></i> Doctor ID <span class="required-color">*</span>
+            </label>
+            <%  if(request.getAttribute("doctorID")==null){DrIDSet = "Dr-";} %>
+            <input type="text" placeholder="Enter doctor's id" name="doctorID" id="doctorID" value="<%= DrIDSet %>${param.doctorID}" required/>
+            <% String error1 = (String) request.getAttribute("message1");
+            if(error1!=null)
+            {
+            %>
+            <span class="error-message"> <%= error1 %>  </span> <br>
+            <% } else { %>
+            <br>
+            <% } %>
+        </div>
+
+        <!-- Doctor Name -->
+        <div class="input-section">
+            <label>
+                <i class="fa-solid fa-user" style="color: #0bb288;"></i> Doctor Name <span class="required-color">*</span>
+            </label>
+            <input type="text" placeholder="Enter doctor's name" name="doctorName" id="doctorName" value="${param.doctorName}" required/>
+            <% String error2 = (String) request.getAttribute("message2");
+            if(error2!=null)
+            {
+            %>
+            <span class="error-message"> <%= error2 %>  </span> <br>
+            <% } else { %>
+            <br>
+            <% } %>
+        </div>
+
+        <!-- Doctor Email -->
+        <div class="input-section">
+            <label>
+                <i class="fa-regular fa-envelope" style="color: #0bb288;"></i> Doctor Email <span class="required-color">*</span>
+            </label>
+            <input type="text" name="doctorEmail" id="doctorEmail" value="${param.doctorEmail}" placeholder="Enter doctor's email" required>
+            <% String error3 = (String) request.getAttribute("message3");
+            if(error3!=null)
+            {
+            %>
+            <span class="error-message"> <%= error3 %>  </span> <br>
+            <% } else { %>
+            <br>
+            <% } %>
+        </div>
+
+        <!-- Doctor Tel -->
+        <div class="input-section">
+            <label>
+                <i class="fa-solid fa-phone" style="color: #0bb288;"></i> Doctor Tel <span class="required-color">*</span>
+            </label>
+            <input type="text" name="doctorTel" id="doctorTel" placeholder="Enter doctor's phone: 09" value="${param.doctorTel}" required>
+            <% String error4 = (String) request.getAttribute("message4");
+            if(error4!=null)
+            {
+            %>
+            <span class="error-message"> <%= error4 %>  </span> <br>
+            <% } else { %>
+            <br>
+            <% } %>
+        </div>
+
+        <!-- Doctor Password -->
+        <div class="input-section">
+            <label>
+                <i class="fa-solid fa-lock" style="color: #0bb288;"></i> Doctor Password <span class="required-color">*</span>
+            </label>
+            <input type="password" placeholder="Enter doctor's password" name="doctorPwd" id="doctorPwd" value="${param.doctorPwd}" required/>
+            <% String error5 = (String) request.getAttribute("message5");
+            if(error5!=null)
+            {
+            %>
+            <span class="error-message"> <%= error5 %>  </span> <br>
+            <% } else { %>
+            <br>
+            <% } %>
+        </div>
+
+        <!-- Department -->
+        <div class="input-section">
+            <label>
+                <i class="fa-regular fa-hospital" style="color: #0bb288;"></i> Department<span class="required-color">*</span>
+            </label>
+            <select name="deptID" id="deptID" required>
+                <option value="">Select Department</option>
+                <option value="D-1">Cardiology</option>
+                <option value="D-2">Dermatology</option>
+                <option value="D-3">Otolaryngology</option>
+                <option value="D-4">Emergency</option>
+                <option value="D-5">Orthopaedic</option>
+                <option value="D-6">Neurology</option>
+                <option value="D-7">Obstetrics & Gynaecology</option>
+            </select>
+            <% String error6 = (String) request.getAttribute("message6");
+            if(error6!=null)
+            {
+            %>
+            <span class="error-message"> <%= error6 %>  </span> <br>
+            <% } else { %>
+            <br>
+            <% } %>
+        </div>
+
+        <!-- Role -->
+        <div class="input-section">
+            <label>
+                <i class="fa-solid fa-user-doctor" style="color: #0bb288;"></i> Role<span class="required-color">*</span>
+            </label>
+            <select name="roleID" id="roleID" required>
+                <option value="">Select Role</option>
+                <option value="R-1">Professor</option>
+                <option value="R-2">Assistant Professor</option>
+                <option value="R-3">Fellow</option>
+            </select>
+            <% String error8 = (String) request.getAttribute("message8");
+            if(error8!=null)
+            {
+            %>
+            <span class="error-message"> <%= error8 %>  </span> <br>
+            <% } else { %>
+            <br>
+            <% } %>
+        </div>
+
+        <!-- Submit Button -->
+        <button id="submit-button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#exampleModal" style="background-color: #0bb288"> Signup </button>
+        <button style="background-color: #0bb288">
+            <a style="padding-left: 45%; padding-right: 45%; padding-top: 2%; padding-bottom: 2%; text-decoration: none; color: #ffffff;" href="./adminDashboard.jsp"> Back </a>
+        </button>
+    </form>
+</div>
+</body>
+</html>

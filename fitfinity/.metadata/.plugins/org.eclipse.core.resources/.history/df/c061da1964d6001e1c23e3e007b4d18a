@@ -1,0 +1,244 @@
+<%@page import="ViewSalary.SalaryDAO"%>
+<%@page import="java.util.List" %>
+<%@page import="ViewSalary.Salary" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Doctor Login</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-image: linear-gradient(to right top, #3575fe, #00a9ff, #00ccea, #00e28a, #a8eb12);
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .form-container {
+            margin-top: -270px; /* Adjust this value as needed */
+            width: 50%;
+            
+        }
+
+        form {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        h2 {
+            color: #61dafb;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            color: #61dafb;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 80%;
+            padding: 10px;
+            margin: 5px 0 15px;
+            box-sizing: border-box;
+            border: 1px solid #61dafb;
+            border-radius: 4px;
+            outline: none;
+            color: #282c34;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            border: 1px solid #61dafb;
+        }
+
+        input[type="submit"] {
+            background-color: #61dafb;
+            color: #282c34;
+            padding: 15px;
+            border: none;
+            border-radius: 9px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            width: 70%;
+            margin-top: 10px;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #45a049;
+            color: white;
+        }
+        
+        .input-section {
+		    position: relative;
+		}
+		
+		.error-container {
+		    position: absolute;
+		    top: 100%;
+		    left: 0;
+		    width: 100%;
+		}
+		
+		.error {
+		    color: red;
+		}
+		
+		.table-container {
+            margin-top: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-left: 50px;
+        }
+
+        table {
+		    width: 100%;
+		    border-collapse: collapse;
+		    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+		    overflow: hidden;
+		    border-radius: 10px; /* Adjust the value as needed */
+		}
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #3575FE;
+            color: #ffffff;
+            text-align: center;
+        }
+        
+        td{
+        	background-color: #ffffff;
+        	color: #3575FE;
+        	text-align: center;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        .form-container,
+        .table-container 
+        {
+            width: 90%; /* Adjust as needed */
+            margin-top: 20px; /* Adjust as needed */
+        }
+
+        .form-container {
+            max-width: 600px; /* Adjust as needed */
+        }
+        
+        .error-message {
+            background-color: #f44336;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            border-radius: 10px;
+            margin-right: 45px;
+            width: 90%;
+        }
+        
+        .no-salary-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 15px;
+            width: 110%;
+            
+        }
+    </style>
+</head>
+<body>
+	<% String userid = request.getParameter("userid"); %>
+	<div class="container">
+	<div class="form-container">
+	    <form action="http://localhost:8080/SignUp/viewDaily" method="post">
+	        <h2>Enter your ID and password to view your salary</h2>
+	
+			
+	        <div class="input-section">
+	        	<input type="text" id="doctorId" name="doctorId" placeholder="Enter Your Doctor ID..."value="${userid}" fixed>
+	        	<% String message1 = (String) request.getAttribute("message1"); 
+					if (message1!=null)
+					{
+				%> 
+					<div class="error-container">
+			            <span class="error"> <%= message1 %> </span> 
+			        </div>
+				<% } else { %>
+					<br>
+				<% } %>
+			</div>
+	        <br>
+	        <div class="input-section">
+	        	<input type="password" id="password" name="password" placeholder="Enter Your Password..." required>
+	        	<% String message2 = (String) request.getAttribute("message2"); 
+					if (message2!=null)
+					{
+				%> 
+					<div class="error-container">
+			            <span class="error"> <%= message2 %> </span> <br>
+			        </div>
+				<% } else { %>
+					<br>
+				<% } %>
+			</div>
+			<br>
+	        <input type="submit" value="View">
+	    </form>
+	</div>
+	
+		<div class="table-container">
+			<% String id = (String) request.getAttribute("targetDr"); 
+				SalaryDAO dao = new SalaryDAO();
+				List<Salary> salList = dao.checkSalary(id); 
+				   
+				
+				if(salList!=null && !salList.isEmpty()) { %>
+		      	
+				<table>
+		      	<tr>
+				    <th> Date </th>
+			   		<th> Total appointment </th>
+				    <th> Your Salary </th>
+			    </tr>
+					
+			    <% for(Salary s: salList){ %>
+				   <tr>
+					  <td> <%= s.getAppointmentDate() %></td>
+					  <td> <%= s.getPatientCount() %></td>
+					  <td> <%= s.getTotalSalary() %></td>
+				   </tr>
+			    <% } %>
+		      </table>
+			<% } else { %>
+				<div class="no-salary-container">
+					<span class="error-message"> Sorry, you haven't received any salary for today </span>
+				</div>
+			<% } %>
+		</div>
+		
+	</div>
+</body>
+</html>

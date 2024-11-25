@@ -1,0 +1,52 @@
+
+	  <nav style="background-color: white; margin-top: -2px; padding-top: 0px; box-shadow: 1px 1px 10px black;" class="navbar navbar-expand-lg bg-body-tertiary border p-2 fixed-top">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="./home.html">
+        <img class=" ms-5" height="110" src="./img/MainLogosvg.svg" alt="logo" srcset="">
+        <h2 style="display: inline;">
+            <span style="color: #0bb288; margin-left: 0px; font-family: 'Nunito', sans-serif; font-weight: 700;">FitFinity</span>
+            <span style="color: #af976d; margin-left: 0px; font-family: 'Nunito', sans-serif; font-weight: 700;">Healthcare</span>
+        </h2>
+        <h4 class="navDiv">
+            <span style="color:#af976d; font-family: 'Pacifico', cursive;">Health For</span>
+             <span style="color:#0bb288; font-family: 'Pacifico', cursive;">Everyone</span>
+        </h4>
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav ms-auto me-5 mb-2 mb-lg-0">
+          
+          <li class="nav-item me-4">
+            <a style class="nav-link active " aria-current="page" href="./helpcenterHome.html" target="_blank">
+              <span id="navText" style="font-size: larger;">Help Center</span>
+            </a>
+          </li>
+
+          <li class="nav-item me-4">
+            <a  class="nav-link active " aria-current="page" href="./contactHome.html">
+              <span id="navText" style="font-size: larger;">Contact Us</span>
+            </a>
+          </li>
+          
+          <li class="nav-item me-4">
+            <a class="nav-link active " aria-current="page" href="./bmi-calculator.html" target="_blank">
+              <span id="navText" style="font-size: larger;">BMI Calculator</span>
+            </a>
+          </li>
+
+          <li class="nav-item me-4">
+            <a class="nav-link active " aria-current="page" href="./login.html">
+              <span id="navText" ><span class="loginBtn" style="font-size: larger;">Login</span></span>
+            </a>
+          </li>
+
+          <li class="nav-item me-4">
+            <a class="nav-link active " aria-current="page" href="./signUp.html">
+              <span id="navText" ><Button class="signUpbtn">SignUp</Button></span>
+            </a>
+          </li>
+      </div>
+    </div>
+  </nav>

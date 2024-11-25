@@ -1,0 +1,100 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Assign Doctor Schedule</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Custom CSS -->
+  <style>
+    /* Add custom styles here */
+    .shift-btn {
+      margin-right: 10px;
+      margin-bottom: 5px;
+      display: none; /* Hide actual checkboxes */
+    }
+    .shift-btn.active-label {
+      background-color: #007bff;
+      color: #fff;
+    }
+    .shift-btn.active-label::before {
+      content: "✔"; /* Display checkmark */
+      margin-right: 5px;
+    }
+    .shift-btn:checked + label {
+      background-color: #007bff;
+      color: #fff;
+    }
+    th {
+      text-align: center;
+    }
+    td {
+      text-align: center;
+    }
+    .error-message {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2 class="mt-5">Assign Doctor Schedule</h2>
+    <%-- Display error message if exists --%>
+    <% String error = request.getParameter("error");
+       if (error != null && !error.isEmpty()) { %>
+      <div class="error-message">
+        <%= error %>
+      </div>
+    <% } %>
+    <form action="AddDoctorSchedule" method="post">
+      <div class="form-group">
+        <label for="doctorID">Doctor ID</label>
+        <input type="text" class="form-control" id="doctorID" name="doctorID" placeholder="Enter Doctor's ID">
+      </div>
+      <div class="form-group">
+        <label>Schedule</label>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Day</th>
+              <th>Shift 1</th>
+              <th>Shift 2</th>
+              <th>Shift 3</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Add your table rows for each day and shift here -->
+          </tbody>
+        </table>
+      </div>
+      <button style="margin-left: 15%; width: 70%; " type="submit" class="btn btn-success">Submit</button>
+    </form>
+    <a href="./adminDashboard.jsp"><button style="margin-top: 20px; margin-left: 15%; width: 70%; " type="submit" class="btn btn-success">Back</button></a>
+    <br>
+    <br>
+    <br>
+    <br>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <!-- Custom JS -->
+  <script>
+    // Disable selecting other shifts in the same day once one shift is selected
+    $('.shift-btn').click(function() {
+      var day = $(this).parent().prevAll('td').last().text().trim();
+      $('.shift-btn').each(function() {
+        if ($(this).parent().prevAll('td').last().text().trim() === day && $(this).hasClass('active')) {
+          $(this).prop('checked', false);
+          $(this).removeClass('active');
+        }
+      });
+      $(this).addClass('active');
+    });
+  </script>
+</body>
+</html>
